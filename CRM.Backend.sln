@@ -3,21 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CRM.Api", "CRM.Api\CRM.Api.csproj", "{F9188344-3BE4-4276-99CA-237D11866926}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CRM.Api", "CRM.Api\CRM.Api.csproj", "{F9188344-3BE4-4276-99CA-237D11866926}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CRM.Application", "CRM.Application\CRM.Application.csproj", "{356642CA-24C0-4849-9DA3-7FABAF1B7A11}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CRM.Application", "CRM.Application\CRM.Application.csproj", "{356642CA-24C0-4849-9DA3-7FABAF1B7A11}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CRM.Domain", "CRM.Domain\CRM.Domain.csproj", "{8522E334-68EE-440F-BB70-D831026D8E3F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CRM.Domain", "CRM.Domain\CRM.Domain.csproj", "{8522E334-68EE-440F-BB70-D831026D8E3F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CRM.Infrastructure", "CRM.Infrastructure\CRM.Infrastructure.csproj", "{5926FAD8-07CD-4BAF-A227-33F88433395E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CRM.Infrastructure", "CRM.Infrastructure\CRM.Infrastructure.csproj", "{5926FAD8-07CD-4BAF-A227-33F88433395E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CC9F41FD-ED8E-4967-955A-7262169AC95C}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{F9188344-3BE4-4276-99CA-237D11866926}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -36,5 +38,11 @@ Global
 		{5926FAD8-07CD-4BAF-A227-33F88433395E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5926FAD8-07CD-4BAF-A227-33F88433395E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5926FAD8-07CD-4BAF-A227-33F88433395E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D92FABDD-8625-4443-A819-691A55E957CF}
 	EndGlobalSection
 EndGlobal

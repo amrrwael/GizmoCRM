@@ -1,13 +1,16 @@
 ﻿using CRM.Domain.Common;
 using CRM.Domain.Enums;
-using System.Diagnostics;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CRM.Domain.Entities;
 
 public class Deal : BaseEntity
 {
     public string Title { get; private set; } = string.Empty;
+
+    [Column(TypeName = "decimal(18,2)")]
     public decimal Value { get; private set; }
+
     public DealStage Stage { get; private set; }
     public Guid OwnerId { get; private set; }
     public Guid ContactId { get; private set; }
@@ -32,7 +35,7 @@ public class Deal : BaseEntity
         ContactId = contactId;
         ExpectedCloseDate = expectedCloseDate;
         Description = description;
-        Probability = 10; // Default probability for Lead stage
+        Probability = 10;
     }
 
     public static Deal Create(string title, decimal value, Guid ownerId, Guid contactId, DateTime? expectedCloseDate, string? description)
