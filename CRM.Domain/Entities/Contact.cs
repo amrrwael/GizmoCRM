@@ -1,8 +1,4 @@
 ﻿using CRM.Domain.Common;
-using CRM.Domain.ValueObjects;
-using System.Diagnostics;
-using System.Net;
-
 namespace CRM.Domain.Entities;
 
 public class Contact : BaseEntity
