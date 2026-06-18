@@ -1,4 +1,5 @@
 ﻿using CRM.Domain.Common;
+using CRM.Domain.ValueObjects;
 namespace CRM.Domain.Entities;
 
 public class Contact : BaseEntity
