@@ -1,5 +1,5 @@
 ﻿using CRM.Domain.Common;
-using CRM.Domain.ValueObjects;
+
 namespace CRM.Domain.Entities;
 
 public class Contact : BaseEntity
@@ -7,71 +7,91 @@ public class Contact : BaseEntity
     public string FirstName { get; private set; } = string.Empty;
     public string LastName { get; private set; } = string.Empty;
     public string Email { get; private set; } = string.Empty;
-    public string Phone { get; private set; } = string.Empty;
+    public string? Phone { get; private set; }
     public string? Company { get; private set; }
-    // public Address? Address { get; private set; }
+    public string? Position { get; private set; }
     public string? Notes { get; private set; }
     public string? AvatarUrl { get; private set; }
-    public ICollection<string> Tags { get; private set; } = new List<string>();
     public Guid? AssignedToId { get; private set; }
+
+    // Stored as comma-separated in DB, exposed as list
+    private string _tags = string.Empty;
+    public IReadOnlyList<string> Tags =>
+        string.IsNullOrWhiteSpace(_tags)
+            ? Array.Empty<string>()
+            : _tags.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
 
     // Navigation properties
     public User? AssignedTo { get; private set; }
     public ICollection<Deal> Deals { get; private set; } = new List<Deal>();
     public ICollection<Activity> Activities { get; private set; } = new List<Activity>();
 
-    private Contact() { } // EF Core constructor
+    private Contact() { }
 
-    private Contact(string firstName, string lastName, string email, string phone, string? company, Guid createdBy)
+    private Contact(string firstName, string lastName, string email, string? phone, string? company, string? position, Guid createdBy)
     {
-        FirstName = firstName;
-        LastName = lastName;
-        Email = email.ToLowerInvariant();
-        Phone = phone;
-        Company = company;
+        FirstName = firstName.Trim();
+        LastName = lastName.Trim();
+        Email = email.ToLowerInvariant().Trim();
+        Phone = phone?.Trim();
+        Company = company?.Trim();
+        Position = position?.Trim();
         CreatedBy = createdBy;
     }
 
-    public static Contact Create(string firstName, string lastName, string email, string phone, string? company, Guid createdBy)
-    {
-        return new Contact(firstName, lastName, email, phone, company, createdBy);
-    }
+    public static Contact Create(string firstName, string lastName, string email, string? phone, string? company, string? position, Guid createdBy)
+        => new(firstName, lastName, email, phone, company, position, createdBy);
 
-    public void Update(string firstName, string lastName, string email, string phone, string? company)
+    public string FullName => $"{FirstName} {LastName}";
+
+    public void Update(string firstName, string lastName, string email, string? phone, string? company, string? position)
     {
-        FirstName = firstName;
-        LastName = lastName;
-        Email = email.ToLowerInvariant();
-        Phone = phone;
-        Company = company;
+        FirstName = firstName.Trim();
+        LastName = lastName.Trim();
+        Email = email.ToLowerInvariant().Trim();
+        Phone = phone?.Trim();
+        Company = company?.Trim();
+        Position = position?.Trim();
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void UpdateNotes(string notes)
+    public void UpdateNotes(string? notes)
     {
         Notes = notes;
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void AssignTo(Guid userId)
+    public void SetAvatar(string? avatarUrl)
+    {
+        AvatarUrl = avatarUrl;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void AssignTo(Guid? userId)
     {
         AssignedToId = userId;
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void AddTags(params string[] tags)
+    public void SetTags(IEnumerable<string> tags)
     {
-        foreach (var tag in tags)
-        {
-            if (!Tags.Contains(tag))
-                Tags.Add(tag);
-        }
+        _tags = string.Join(',', tags.Select(t => t.Trim().ToLowerInvariant()).Distinct());
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void AddTag(string tag)
+    {
+        var current = Tags.ToHashSet();
+        current.Add(tag.Trim().ToLowerInvariant());
+        _tags = string.Join(',', current);
         UpdatedAt = DateTime.UtcNow;
     }
 
     public void RemoveTag(string tag)
     {
-        Tags.Remove(tag);
+        var current = Tags.ToHashSet();
+        current.Remove(tag.Trim().ToLowerInvariant());
+        _tags = string.Join(',', current);
         UpdatedAt = DateTime.UtcNow;
     }
 }

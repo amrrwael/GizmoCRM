@@ -1,49 +1,54 @@
 ﻿using CRM.Domain.Common;
 using CRM.Domain.Enums;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CRM.Domain.Entities;
 
 public class Deal : BaseEntity
 {
     public string Title { get; private set; } = string.Empty;
-
-    [Column(TypeName = "decimal(18,2)")]
     public decimal Value { get; private set; }
-
     public DealStage Stage { get; private set; }
+    public int Probability { get; private set; }
     public Guid OwnerId { get; private set; }
     public Guid ContactId { get; private set; }
     public DateTime? ExpectedCloseDate { get; private set; }
     public string? Description { get; private set; }
-    public int Probability { get; private set; }
     public string? LostReason { get; private set; }
+    public DateTime? ClosedAt { get; private set; }
 
     // Navigation properties
     public User Owner { get; private set; } = null!;
     public Contact Contact { get; private set; } = null!;
     public ICollection<Activity> Activities { get; private set; } = new List<Activity>();
 
-    private Deal() { } // EF Core constructor
+    private Deal() { }
 
-    private Deal(string title, decimal value, Guid ownerId, Guid contactId, DateTime? expectedCloseDate, string? description)
+    private Deal(string title, decimal value, Guid ownerId, Guid contactId, DateTime? expectedCloseDate, string? description, Guid createdBy)
     {
-        Title = title;
+        Title = title.Trim();
         Value = value;
         Stage = DealStage.Lead;
+        Probability = 10;
         OwnerId = ownerId;
         ContactId = contactId;
         ExpectedCloseDate = expectedCloseDate;
         Description = description;
-        Probability = 10;
+        CreatedBy = createdBy;
     }
 
-    public static Deal Create(string title, decimal value, Guid ownerId, Guid contactId, DateTime? expectedCloseDate, string? description)
+    public static Deal Create(string title, decimal value, Guid ownerId, Guid contactId, DateTime? expectedCloseDate, string? description, Guid createdBy)
+        => new(title, value, ownerId, contactId, expectedCloseDate, description, createdBy);
+
+    public void UpdateDetails(string title, decimal value, DateTime? expectedCloseDate, string? description)
     {
-        return new Deal(title, value, ownerId, contactId, expectedCloseDate, description);
+        Title = title.Trim();
+        Value = value;
+        ExpectedCloseDate = expectedCloseDate;
+        Description = description;
+        UpdatedAt = DateTime.UtcNow;
     }
 
-    public void UpdateStage(DealStage newStage, string? lostReason = null)
+    public void MoveToStage(DealStage newStage, string? lostReason = null)
     {
         Stage = newStage;
         UpdatedAt = DateTime.UtcNow;
@@ -59,17 +64,11 @@ public class Deal : BaseEntity
             _ => Probability
         };
 
+        if (newStage is DealStage.Won or DealStage.Lost)
+            ClosedAt = DateTime.UtcNow;
+
         if (newStage == DealStage.Lost)
             LostReason = lostReason;
-    }
-
-    public void UpdateDetails(string title, decimal value, DateTime? expectedCloseDate, string? description)
-    {
-        Title = title;
-        Value = value;
-        ExpectedCloseDate = expectedCloseDate;
-        Description = description;
-        UpdatedAt = DateTime.UtcNow;
     }
 
     public void Reassign(Guid newOwnerId)
@@ -77,4 +76,6 @@ public class Deal : BaseEntity
         OwnerId = newOwnerId;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public bool IsOpen => Stage is not (DealStage.Won or DealStage.Lost);
 }
