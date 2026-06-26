@@ -1,9 +1,11 @@
-﻿namespace CRM.Application.Common.Interfaces;
+﻿using CRM.Domain.Enums;
+
+namespace CRM.Application.Common.Interfaces;
 
 public interface ICurrentUserService
 {
     Guid UserId { get; }
     string Email { get; }
-    string Role { get; }
+    UserRole Role { get; }
     bool IsAuthenticated { get; }
 }
