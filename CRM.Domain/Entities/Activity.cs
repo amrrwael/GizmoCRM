@@ -16,35 +16,48 @@ public class Activity : BaseEntity
     public Guid? DealId { get; private set; }
     public bool HasReminder { get; private set; }
     public DateTime? ReminderAt { get; private set; }
+    public string? Outcome { get; private set; }
+    public int? DurationMinutes { get; private set; }
 
     // Navigation properties
     public User AssignedTo { get; private set; } = null!;
     public Contact? Contact { get; private set; }
     public Deal? Deal { get; private set; }
 
-    private Activity() { } // EF Core constructor
+    private Activity() { }
 
-    private Activity(ActivityType type, string title, string? description, DateTime? dueDate, Guid assignedToId, Guid? contactId, Guid? dealId)
+    private Activity(ActivityType type, string title, string? description, DateTime? dueDate,
+        Guid assignedToId, Guid? contactId, Guid? dealId, Guid createdBy)
     {
         Type = type;
         Status = ActivityStatus.Pending;
-        Title = title;
+        Title = title.Trim();
         Description = description;
         DueDate = dueDate;
         AssignedToId = assignedToId;
         ContactId = contactId;
         DealId = dealId;
+        CreatedBy = createdBy;
     }
 
-    public static Activity Create(ActivityType type, string title, string? description, DateTime? dueDate, Guid assignedToId, Guid? contactId, Guid? dealId)
+    public static Activity Create(ActivityType type, string title, string? description, DateTime? dueDate,
+        Guid assignedToId, Guid? contactId, Guid? dealId, Guid createdBy)
+        => new(type, title, description, dueDate, assignedToId, contactId, dealId, createdBy);
+
+    public void Update(string title, string? description, DateTime? dueDate, int? durationMinutes)
     {
-        return new Activity(type, title, description, dueDate, assignedToId, contactId, dealId);
+        Title = title.Trim();
+        Description = description;
+        DueDate = dueDate;
+        DurationMinutes = durationMinutes;
+        UpdatedAt = DateTime.UtcNow;
     }
 
-    public void Complete()
+    public void Complete(string? outcome = null)
     {
         Status = ActivityStatus.Completed;
         CompletedAt = DateTime.UtcNow;
+        Outcome = outcome;
         UpdatedAt = DateTime.UtcNow;
     }
 
@@ -61,10 +74,12 @@ public class Activity : BaseEntity
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void RemoveReminder()
+    public void ClearReminder()
     {
         HasReminder = false;
         ReminderAt = null;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public bool IsOverdue => Status == ActivityStatus.Pending && DueDate.HasValue && DueDate < DateTime.UtcNow;
 }

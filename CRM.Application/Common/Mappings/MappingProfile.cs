@@ -1,12 +1,4 @@
 ﻿using AutoMapper;
-using CRM.Application.Features.Auth.Commands;
-using CRM.Application.Features.Contacts.Commands;
-using CRM.Application.Features.Deals.Commands;
-using CRM.Application.Features.Activities.Commands;
-using CRM.Application.Features.Auth.DTOs;
-using CRM.Application.Features.Contacts.DTOs;
-using CRM.Application.Features.Deals.DTOs;
-using CRM.Application.Features.Activities.DTOs;
 using CRM.Domain.Entities;
 
 namespace CRM.Application.Common.Mappings;

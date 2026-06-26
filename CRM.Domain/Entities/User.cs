@@ -1,6 +1,5 @@
 ﻿using CRM.Domain.Common;
 using CRM.Domain.Enums;
-using System.Diagnostics;
 
 namespace CRM.Domain.Entities;
 
@@ -17,47 +16,58 @@ public class User : BaseEntity
     public DateTime? RefreshTokenExpiryTime { get; private set; }
 
     // Navigation properties
-    public ICollection<Deal> Deals { get; private set; } = new List<Deal>();
+    public ICollection<Deal> OwnedDeals { get; private set; } = new List<Deal>();
     public ICollection<Activity> Activities { get; private set; } = new List<Activity>();
+    public ICollection<Contact> AssignedContacts { get; private set; } = new List<Contact>();
 
     private User() { } // EF Core constructor
 
     private User(string email, string passwordHash, string firstName, string lastName, UserRole role)
     {
-        Email = email.ToLowerInvariant();
+        Email = email.ToLowerInvariant().Trim();
         PasswordHash = passwordHash;
-        FirstName = firstName;
-        LastName = lastName;
+        FirstName = firstName.Trim();
+        LastName = lastName.Trim();
         Role = role;
         IsActive = true;
     }
 
     public static User Create(string email, string passwordHash, string firstName, string lastName, UserRole role)
-    {
-        return new User(email, passwordHash, firstName, lastName, role);
-    }
+        => new(email, passwordHash, firstName, lastName, role);
+
+    public string FullName => $"{FirstName} {LastName}";
 
     public void UpdateProfile(string firstName, string lastName)
     {
-        FirstName = firstName;
-        LastName = lastName;
+        FirstName = firstName.Trim();
+        LastName = lastName.Trim();
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void UpdateRefreshToken(string? refreshToken, DateTime? expiryTime)
+    public void ChangeRole(UserRole newRole)
+    {
+        Role = newRole;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetRefreshToken(string? refreshToken, DateTime? expiryTime)
     {
         RefreshToken = refreshToken;
         RefreshTokenExpiryTime = expiryTime;
+        UpdatedAt = DateTime.UtcNow;
     }
 
-    public void UpdateLastLogin()
+    public void RecordLogin()
     {
         LastLoginAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void Deactivate()
     {
         IsActive = false;
+        RefreshToken = null;
+        RefreshTokenExpiryTime = null;
         UpdatedAt = DateTime.UtcNow;
     }
 
