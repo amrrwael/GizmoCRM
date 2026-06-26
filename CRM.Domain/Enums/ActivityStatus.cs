@@ -3,7 +3,7 @@
 public enum ActivityStatus
 {
     Pending = 1,
-    Completed = 2,
-    Cancelled = 3,
-    Overdue = 4
+    InProgress = 2,
+    Completed = 3,
+    Cancelled = 4
 }
