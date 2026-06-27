@@ -1,19 +1,24 @@
-﻿using CRM.Application.Common.Behaviors;
-using FluentValidation;
-using MediatR;
+﻿using CRM.Application.Common.Interfaces;
+using CRM.Infrastructure.Persistence;
+using CRM.Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace CRM.Application;
+namespace CRM.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var assembly = typeof(DependencyInjection).Assembly;
+        services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlServer(
+                configuration.GetConnectionString("DefaultConnection"),
+                b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)
+                      .EnableRetryOnFailure(3)));
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
-        services.AddValidatorsFromAssembly(assembly);
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+        services.AddScoped<ITokenService, TokenService>();
 
         return services;
     }

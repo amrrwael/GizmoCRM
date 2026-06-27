@@ -109,7 +109,7 @@ public class GetDashboardHandler(IApplicationDbContext db, ICurrentUserService c
                     u.OwnedDeals.Count,
                     u.OwnedDeals.Count(d => d.Stage == DealStage.Won),
                     u.OwnedDeals.Where(d => d.Stage == DealStage.Won).Sum(d => d.Value),
-                    u.OwnedDeals.Any() ? (double)u.OwnedDeals.Count(d => d.Stage == DealStage.Won) / u.OwnedDeals.Count * 100 : 0))
+                    u.OwnedDeals.Any() ? (decimal)u.OwnedDeals.Count(d => d.Stage == DealStage.Won) / u.OwnedDeals.Count * 100 : 0m))
                 .OrderByDescending(u => u.WonValue)
                 .Take(5)
                 .ToListAsync(cancellationToken);

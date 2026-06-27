@@ -104,7 +104,7 @@ public class CreateDealHandler(IApplicationDbContext db, ICurrentUserService cur
         db.Deals.Add(deal);
         await db.SaveChangesAsync(cancellationToken);
 
-        return await LoadDealDto(db, deal.Id, cancellationToken);
+        return await DealHelper.LoadDealDto(db, deal.Id, cancellationToken);
     }
 }
 
@@ -116,12 +116,12 @@ public class UpdateDealHandler(IApplicationDbContext db, ICurrentUserService cur
         var deal = await db.Deals.FindAsync([request.Id], cancellationToken)
             ?? throw new NotFoundException("Deal", request.Id);
 
-        EnsureDealAccess(currentUser, deal);
+        DealHelper.EnsureDealAccess(currentUser, deal);
 
         deal.UpdateDetails(request.Title, request.Value, request.ExpectedCloseDate, request.Description);
         await db.SaveChangesAsync(cancellationToken);
 
-        return await LoadDealDto(db, deal.Id, cancellationToken);
+        return await DealHelper.LoadDealDto(db, deal.Id, cancellationToken);
     }
 }
 
@@ -133,12 +133,12 @@ public class MoveDealStageHandler(IApplicationDbContext db, ICurrentUserService 
         var deal = await db.Deals.FindAsync([request.Id], cancellationToken)
             ?? throw new NotFoundException("Deal", request.Id);
 
-        EnsureDealAccess(currentUser, deal);
+        DealHelper.EnsureDealAccess(currentUser, deal);
 
         deal.MoveToStage(request.NewStage, request.LostReason);
         await db.SaveChangesAsync(cancellationToken);
 
-        return await LoadDealDto(db, deal.Id, cancellationToken);
+        return await DealHelper.LoadDealDto(db, deal.Id, cancellationToken);
     }
 }
 
@@ -158,7 +158,7 @@ public class ReassignDealHandler(IApplicationDbContext db, ICurrentUserService c
         deal.Reassign(request.NewOwnerId);
         await db.SaveChangesAsync(cancellationToken);
 
-        return await LoadDealDto(db, deal.Id, cancellationToken);
+        return await DealHelper.LoadDealDto(db, deal.Id, cancellationToken);
     }
 }
 

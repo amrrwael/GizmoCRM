@@ -1,13 +1,13 @@
 ﻿using CRM.Application.Common.Exceptions;
 using CRM.Application.Common.Interfaces;
 using CRM.Domain.Entities;
+using CRM.Application.Features.Contacts.Commands;
 using CRM.Domain.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Application.Features.Contacts.Commands;
-
 // ── DTOs ──────────────────────────────────────────────────────────────────────
 
 public record ContactDto(
@@ -99,7 +99,7 @@ public class CreateContactHandler(IApplicationDbContext db, ICurrentUserService 
         db.Contacts.Add(contact);
         await db.SaveChangesAsync(cancellationToken);
 
-        return await GetContactDto(db, contact.Id, cancellationToken);
+        return await ContactHelper.GetContactDto(db, contact.Id, cancellationToken);
     }
 }
 
@@ -111,14 +111,14 @@ public class UpdateContactHandler(IApplicationDbContext db, ICurrentUserService 
         var contact = await db.Contacts.FindAsync([request.Id], cancellationToken)
             ?? throw new NotFoundException("Contact", request.Id);
 
-        EnsureAccess(currentUser, contact);
+        ContactHelper.EnsureAccess(currentUser, contact);
 
         contact.Update(request.FirstName, request.LastName, request.Email, request.Phone, request.Company, request.Position);
         contact.UpdateNotes(request.Notes);
         if (request.Tags is not null) contact.SetTags(request.Tags);
 
         await db.SaveChangesAsync(cancellationToken);
-        return await GetContactDto(db, contact.Id, cancellationToken);
+        return await ContactHelper.GetContactDto(db, contact.Id, cancellationToken);
     }
 }
 
@@ -140,7 +140,7 @@ public class AssignContactHandler(IApplicationDbContext db, ICurrentUserService 
 
         contact.AssignTo(request.AssignedToId);
         await db.SaveChangesAsync(cancellationToken);
-        return await GetContactDto(db, contact.Id, cancellationToken);
+        return await ContactHelper.GetContactDto(db, contact.Id, cancellationToken);
     }
 }
 

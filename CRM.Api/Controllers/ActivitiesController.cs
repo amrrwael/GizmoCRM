@@ -1,6 +1,7 @@
-﻿using CRM.Application.Features.Auth.Commands;
-using CRM.Application.Features.Users.Commands;
-using CRM.Application.Features.Users.Queries;
+﻿using CRM.Application.Features.Activities.Commands;
+using CRM.Application.Features.Activities.Queries;
+using CRM.Application.Features.Contacts.Commands;
+using CRM.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,60 +12,72 @@ namespace CRM.Api.Controllers;
 [Route("api/[controller]")]
 [Authorize]
 [Produces("application/json")]
-public class UsersController(IMediator mediator) : ControllerBase
+public class ActivitiesController(IMediator mediator) : ControllerBase
 {
-    /// <summary>Get all users (Admin/Manager only).</summary>
+    /// <summary>Get paginated list of activities with optional filters.</summary>
     [HttpGet]
-    [ProducesResponseType(typeof(List<UserDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll(CancellationToken ct) =>
-        Ok(await mediator.Send(new GetAllUsersQuery(), ct));
+    [ProducesResponseType(typeof(PagedResult<ActivityDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] Guid? assignedToId = null,
+        [FromQuery] Guid? contactId = null,
+        [FromQuery] Guid? dealId = null,
+        [FromQuery] ActivityStatus? status = null,
+        [FromQuery] bool onlyOverdue = false,
+        CancellationToken ct = default) =>
+        Ok(await mediator.Send(new GetActivitiesQuery(page, pageSize, assignedToId, contactId, dealId, status, onlyOverdue), ct));
 
-    /// <summary>Get the currently authenticated user's profile.</summary>
-    [HttpGet("me")]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMe(CancellationToken ct) =>
-        Ok(await mediator.Send(new GetCurrentUserQuery(), ct));
+    /// <summary>Get all overdue pending activities.</summary>
+    [HttpGet("overdue")]
+    [ProducesResponseType(typeof(List<ActivityDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOverdue(CancellationToken ct) =>
+        Ok(await mediator.Send(new GetOverdueActivitiesQuery(), ct));
 
-    /// <summary>Get a user by ID.</summary>
+    /// <summary>Get an activity by ID.</summary>
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ActivityDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct) =>
-        Ok(await mediator.Send(new GetUserByIdQuery(id), ct));
+        Ok(await mediator.Send(new GetActivityByIdQuery(id), ct));
 
-    /// <summary>Update a user's profile (own profile or Admin).</summary>
-    [HttpPut("{id:guid}")]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> UpdateProfile(Guid id, [FromBody] UpdateProfileRequest request, CancellationToken ct) =>
-        Ok(await mediator.Send(new UpdateUserProfileCommand(id, request.FirstName, request.LastName), ct));
-
-    /// <summary>Change a user's role (Admin only).</summary>
-    [HttpPatch("{id:guid}/role")]
-    [Authorize(Roles = "Admin")]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> ChangeRole(Guid id, [FromBody] ChangeRoleRequest request, CancellationToken ct) =>
-        Ok(await mediator.Send(new ChangeUserRoleCommand(id, request.NewRole), ct));
-
-    /// <summary>Deactivate a user (Admin only).</summary>
-    [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)
+    /// <summary>Create a new activity.</summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(ActivityDto), StatusCodes.Status201Created)]
+    public async Task<IActionResult> Create([FromBody] CreateActivityCommand command, CancellationToken ct)
     {
-        await mediator.Send(new DeactivateUserCommand(id), ct);
-        return NoContent();
+        var result = await mediator.Send(command, ct);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
-    /// <summary>Reactivate a deactivated user (Admin only).</summary>
-    [HttpPatch("{id:guid}/activate")]
-    [Authorize(Roles = "Admin")]
+    /// <summary>Update an existing activity.</summary>
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(ActivityDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateActivityRequest request, CancellationToken ct) =>
+        Ok(await mediator.Send(new UpdateActivityCommand(id, request.Title, request.Description,
+            request.DueDate, request.DurationMinutes, request.ReminderAt), ct));
+
+    /// <summary>Mark an activity as complete.</summary>
+    [HttpPatch("{id:guid}/complete")]
+    [ProducesResponseType(typeof(ActivityDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Complete(Guid id, [FromBody] CompleteRequest? request, CancellationToken ct) =>
+        Ok(await mediator.Send(new CompleteActivityCommand(id, request?.Outcome), ct));
+
+    /// <summary>Cancel an activity.</summary>
+    [HttpPatch("{id:guid}/cancel")]
+    [ProducesResponseType(typeof(ActivityDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Cancel(Guid id, CancellationToken ct) =>
+        Ok(await mediator.Send(new CancelActivityCommand(id), ct));
+
+    /// <summary>Delete an activity.</summary>
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Activate(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        await mediator.Send(new ActivateUserCommand(id), ct);
+        await mediator.Send(new DeleteActivityCommand(id), ct);
         return NoContent();
     }
 }
 
-public record UpdateProfileRequest(string FirstName, string LastName);
-public record ChangeRoleRequest(CRM.Domain.Enums.UserRole NewRole);
+public record UpdateActivityRequest(string Title, string? Description, DateTime? DueDate, int? DurationMinutes, DateTime? ReminderAt);
+public record CompleteRequest(string? Outcome);

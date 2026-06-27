@@ -98,7 +98,7 @@ public class CreateActivityHandler(IApplicationDbContext db, ICurrentUserService
         db.Activities.Add(activity);
         await db.SaveChangesAsync(cancellationToken);
 
-        return await LoadDto(db, activity.Id, cancellationToken);
+        return await ActivityHelper.LoadDto(db, activity.Id, cancellationToken);
     }
 }
 
@@ -110,7 +110,7 @@ public class UpdateActivityHandler(IApplicationDbContext db, ICurrentUserService
         var activity = await db.Activities.FindAsync([request.Id], cancellationToken)
             ?? throw new NotFoundException("Activity", request.Id);
 
-        EnsureAccess(currentUser, activity);
+        ActivityHelper.EnsureAccess(currentUser, activity);
 
         activity.Update(request.Title, request.Description, request.DueDate, request.DurationMinutes);
 
@@ -120,7 +120,7 @@ public class UpdateActivityHandler(IApplicationDbContext db, ICurrentUserService
             activity.ClearReminder();
 
         await db.SaveChangesAsync(cancellationToken);
-        return await LoadDto(db, activity.Id, cancellationToken);
+        return await ActivityHelper.LoadDto(db, activity.Id, cancellationToken);
     }
 }
 
@@ -132,14 +132,14 @@ public class CompleteActivityHandler(IApplicationDbContext db, ICurrentUserServi
         var activity = await db.Activities.FindAsync([request.Id], cancellationToken)
             ?? throw new NotFoundException("Activity", request.Id);
 
-        EnsureAccess(currentUser, activity);
+        ActivityHelper.EnsureAccess(currentUser, activity);
 
         if (activity.Status == ActivityStatus.Completed)
             throw new ConflictException("Activity is already completed.");
 
         activity.Complete(request.Outcome);
         await db.SaveChangesAsync(cancellationToken);
-        return await LoadDto(db, activity.Id, cancellationToken);
+        return await ActivityHelper.LoadDto(db, activity.Id, cancellationToken);
     }
 }
 
@@ -151,10 +151,10 @@ public class CancelActivityHandler(IApplicationDbContext db, ICurrentUserService
         var activity = await db.Activities.FindAsync([request.Id], cancellationToken)
             ?? throw new NotFoundException("Activity", request.Id);
 
-        EnsureAccess(currentUser, activity);
+        ActivityHelper.EnsureAccess(currentUser, activity);
         activity.Cancel();
         await db.SaveChangesAsync(cancellationToken);
-        return await LoadDto(db, activity.Id, cancellationToken);
+        return await ActivityHelper.LoadDto(db, activity.Id, cancellationToken);
     }
 }
 
@@ -166,7 +166,7 @@ public class DeleteActivityHandler(IApplicationDbContext db, ICurrentUserService
         var activity = await db.Activities.FindAsync([request.Id], cancellationToken)
             ?? throw new NotFoundException("Activity", request.Id);
 
-        EnsureAccess(currentUser, activity);
+        ActivityHelper.EnsureAccess(currentUser, activity);
         db.Activities.Remove(activity);
         await db.SaveChangesAsync(cancellationToken);
     }

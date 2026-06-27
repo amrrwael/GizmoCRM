@@ -1,6 +1,5 @@
-﻿using CRM.Application.Features.Auth.Commands;
-using CRM.Application.Features.Users.Commands;
-using CRM.Application.Features.Users.Queries;
+﻿using CRM.Application.Features.Contacts.Commands;
+using CRM.Application.Features.Contacts.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,60 +10,74 @@ namespace CRM.Api.Controllers;
 [Route("api/[controller]")]
 [Authorize]
 [Produces("application/json")]
-public class UsersController(IMediator mediator) : ControllerBase
+public class ContactsController(IMediator mediator) : ControllerBase
 {
-    /// <summary>Get all users (Admin/Manager only).</summary>
+    /// <summary>Get paginated list of contacts.</summary>
     [HttpGet]
-    [ProducesResponseType(typeof(List<UserDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll(CancellationToken ct) =>
-        Ok(await mediator.Send(new GetAllUsersQuery(), ct));
+    [ProducesResponseType(typeof(PagedResult<ContactDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? search = null,
+        [FromQuery] string? tag = null,
+        CancellationToken ct = default) =>
+        Ok(await mediator.Send(new GetContactsQuery(page, pageSize, search, tag), ct));
 
-    /// <summary>Get the currently authenticated user's profile.</summary>
-    [HttpGet("me")]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMe(CancellationToken ct) =>
-        Ok(await mediator.Send(new GetCurrentUserQuery(), ct));
-
-    /// <summary>Get a user by ID.</summary>
+    /// <summary>Get a contact by ID.</summary>
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ContactDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct) =>
-        Ok(await mediator.Send(new GetUserByIdQuery(id), ct));
+        Ok(await mediator.Send(new GetContactByIdQuery(id), ct));
 
-    /// <summary>Update a user's profile (own profile or Admin).</summary>
-    [HttpPut("{id:guid}")]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> UpdateProfile(Guid id, [FromBody] UpdateProfileRequest request, CancellationToken ct) =>
-        Ok(await mediator.Send(new UpdateUserProfileCommand(id, request.FirstName, request.LastName), ct));
+    /// <summary>Get the full activity/deal timeline for a contact.</summary>
+    [HttpGet("{id:guid}/timeline")]
+    [ProducesResponseType(typeof(PagedResult<TimelineItemDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetTimeline(
+        Guid id,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 30,
+        CancellationToken ct = default) =>
+        Ok(await mediator.Send(new GetContactTimelineQuery(id, page, pageSize), ct));
 
-    /// <summary>Change a user's role (Admin only).</summary>
-    [HttpPatch("{id:guid}/role")]
-    [Authorize(Roles = "Admin")]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> ChangeRole(Guid id, [FromBody] ChangeRoleRequest request, CancellationToken ct) =>
-        Ok(await mediator.Send(new ChangeUserRoleCommand(id, request.NewRole), ct));
-
-    /// <summary>Deactivate a user (Admin only).</summary>
-    [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)
+    /// <summary>Create a new contact.</summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(ContactDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Create([FromBody] CreateContactCommand command, CancellationToken ct)
     {
-        await mediator.Send(new DeactivateUserCommand(id), ct);
-        return NoContent();
+        var result = await mediator.Send(command, ct);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
-    /// <summary>Reactivate a deactivated user (Admin only).</summary>
-    [HttpPatch("{id:guid}/activate")]
-    [Authorize(Roles = "Admin")]
+    /// <summary>Update an existing contact.</summary>
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(ContactDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateContactRequest request, CancellationToken ct) =>
+        Ok(await mediator.Send(new UpdateContactCommand(id, request.FirstName, request.LastName,
+            request.Email, request.Phone, request.Company, request.Position, request.Notes, request.Tags), ct));
+
+    /// <summary>Assign a contact to a user (Admin/Manager only).</summary>
+    [HttpPatch("{id:guid}/assign")]
+    [Authorize(Roles = "Admin,Manager")]
+    [ProducesResponseType(typeof(ContactDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Assign(Guid id, [FromBody] AssignRequest request, CancellationToken ct) =>
+        Ok(await mediator.Send(new AssignContactCommand(id, request.AssignedToId), ct));
+
+    /// <summary>Delete a contact (Admin/Manager only).</summary>
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin,Manager")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Activate(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        await mediator.Send(new ActivateUserCommand(id), ct);
+        await mediator.Send(new DeleteContactCommand(id), ct);
         return NoContent();
     }
 }
 
-public record UpdateProfileRequest(string FirstName, string LastName);
-public record ChangeRoleRequest(CRM.Domain.Enums.UserRole NewRole);
+public record UpdateContactRequest(
+    string FirstName, string LastName, string Email,
+    string? Phone, string? Company, string? Position,
+    string? Notes, List<string>? Tags);
+
+public record AssignRequest(Guid? AssignedToId);
