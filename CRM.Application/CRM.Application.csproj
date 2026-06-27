@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <Compile Remove="Features\Users\Commands+Queries\UsersCommands.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\CRM.Domain\CRM.Domain.csproj" />
   </ItemGroup>
 
@@ -16,10 +20,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Contacts\" />
-    <Folder Include="Features\Deals\" />
-    <Folder Include="Features\Activities\" />
-    <Folder Include="Features\Users\" />
+    <Folder Include="Features\Activities\Commands+Queries\" />
+    <Folder Include="Features\Contacts\Commands+Queries\" />
+    <Folder Include="Features\Deals\Commands+Queries\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Features\Users\Commands+Queries\UsersCommands.cs" />
   </ItemGroup>
 
   <PropertyGroup>
