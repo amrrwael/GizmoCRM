@@ -21,10 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Activities\Commands+Queries\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="Features\Deals\Commands+Queries\DealQueries.cs" />
     <None Include="Features\Users\Commands+Queries\UserCommands.cs" />
   </ItemGroup>
