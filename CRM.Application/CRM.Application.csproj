@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <Compile Remove="Features\Users\Commands+Queries\UsersCommands.cs" />
+    <Compile Remove="Features\Deals\Commands+Queries\DealQueries.cs" />
+    <Compile Remove="Features\Users\Commands+Queries\UserCommands.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,12 +22,11 @@
 
   <ItemGroup>
     <Folder Include="Features\Activities\Commands+Queries\" />
-    <Folder Include="Features\Contacts\Commands+Queries\" />
-    <Folder Include="Features\Deals\Commands+Queries\" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Features\Users\Commands+Queries\UsersCommands.cs" />
+    <None Include="Features\Deals\Commands+Queries\DealQueries.cs" />
+    <None Include="Features\Users\Commands+Queries\UserCommands.cs" />
   </ItemGroup>
 
   <PropertyGroup>
