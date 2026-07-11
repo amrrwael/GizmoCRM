@@ -1,4 +1,5 @@
-﻿using CRM.Application.Common.Interfaces;
+﻿// CRM.Api/Services/CurrentUserService.cs
+using CRM.Application.Common.Interfaces;
 using CRM.Domain.Enums;
 using System.Security.Claims;
 
@@ -8,19 +9,36 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICur
 {
     private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
 
-    public Guid UserId =>
-        Guid.TryParse(User?.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? User?.FindFirstValue("sub"), out var id)
-            ? id : Guid.Empty;
+    public Guid UserId
+    {
+        get
+        {
+            if (!IsAuthenticated)
+                return Guid.Empty;
 
-    public string Email => User?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+            var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User?.FindFirstValue("sub")
+                ?? User?.FindFirstValue("userId");
+
+            return Guid.TryParse(userId, out var id) ? id : Guid.Empty;
+        }
+    }
+
+    public string Email => IsAuthenticated
+        ? User?.FindFirstValue(ClaimTypes.Email) ?? string.Empty
+        : string.Empty;
 
     public UserRole Role
     {
         get
         {
-            var role = User?.FindFirstValue(ClaimTypes.Role);
-            return Enum.TryParse<UserRole>(role, out var parsed) ? parsed : UserRole.Sales;
+            if (!IsAuthenticated)
+                return UserRole.Sales; // Default role for unauthenticated
+
+            var role = User?.FindFirstValue(ClaimTypes.Role)
+                ?? User?.FindFirstValue("role");
+
+            return Enum.TryParse<UserRole>(role, true, out var parsed) ? parsed : UserRole.Sales;
         }
     }
 
